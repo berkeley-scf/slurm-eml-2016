@@ -1,0 +1,386 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="August 2, 2016" />
+  <title>Savio introductory training: Basic usage of the Berkeley Savio high-performance computing cluster</title>
+  <style type="text/css">code{white-space: pre;}</style>
+</head>
+<body>
+<div id="header">
+<h1 class="title">Savio introductory training: Basic usage of the Berkeley Savio high-performance computing cluster</h1>
+<h2 class="author">August 2, 2016</h2>
+</div>
+<h1 id="introduction">Introduction</h1>
+<p>We'll do this mostly as a demonstration. I encourage you to login to your account and try out the various examples yourself as we go through them.</p>
+<p>Much of this material is based on the extensive Savio documention we have prepared and continue to prepare, available at <a href="http://research-it.berkeley.edu/services/high-performance-computing/user-guide">http://research-it.berkeley.edu/services/high-performance-computing/user-guide</a>.</p>
+<p>The materials for this tutorial are available using git at <a href="https://github.com/ucberkeley/savio-training-intro-2016">https://github.com/ucberkeley/savio-training-intro-2016</a> or simply as a <a href="https://github.com/ucberkeley/savio-training-intro-2016/archive/master.zip">zip file</a>.</p>
+<h1 id="outline">Outline</h1>
+<p>This training session will cover the following topics:</p>
+<ul>
+<li>Overview of EML and campus resources</li>
+<li>EML clusters (old and new)</li>
+<li>Savio campus cluster</li>
+<li>NSF XSEDE national infrastructure</li>
+<li>Clusters and job scheduling</li>
+<li>brief discussion of job competition and the scheduling problem</li>
+<li>SLURM</li>
+<li>basic interactive and batch submission</li>
+<li>submitting parallel jobs</li>
+<li>monitoring jobs</li>
+<li>Stata, Python, MATLAB, R templates for parallel code</li>
+<li>Savio</li>
+<li>Access models: Econ condo and faculty computing allowances</li>
+<li>Basic usage of Savio
+<ul>
+<li>logging in</li>
+<li>data transfer</li>
+<li>accessing software</li>
+</ul></li>
+<li>Disk space</li>
+<li>XSEDE</li>
+<li>How to get additional help</li>
+</ul>
+<h1 id="overview-of-eml-and-campus-resources">Overview of EML and campus resources</h1>
+<ul>
+<li>EML clusters<br /></li>
+<li><a href="http://eml.berkeley.edu/563">'SGE' (old) cluster</a>: 256 cores across 8 nodes, 264 GB RAM / node</li>
+<li><a href="http://eml.berkeley.edu/52">'SLURM' (new) cluster</a>: 224 cores across 4 nodes, 132 GB RAM / nodes</li>
+<li>Stata, Python, R, MATLAB, SAS</li>
+<li><a href="http://research-it.berkeley.edu/services/high-performance-computing">Savio campus cluster</a></li>
+<li>~6600 nodes across ~330 nodes, 64 GB RAM on most nodes but up to 512 GB RAM on high-memory</li>
+<li>2 nodes (48 cores) owned by EML</li>
+<li>Python, R, MATLAB, Spark</li>
+<li><a href="https://www.xsede.org">NSF XSEDE network</a> of supercomputers</li>
+<li>Bridges supercomputer for big data computing, including Spark</li>
+</ul>
+<p>** Big picture: if you don't have enough computing resources, don't give up and work on a smaller problem, talk to us. **</p>
+<h1 id="job-competition-and-scheduling-on-the-eml-clusters">Job competition and scheduling on the EML clusters</h1>
+<ul>
+<li>jobs with various requirements</li>
+<li>current scheduling policies</li>
+<li>fairshare for queue</li>
+<li>once running, only subject to time limits</li>
+<li>backfilling and (on old cluster) resource reservations</li>
+<li>time limits</li>
+</ul>
+<h1 id="slurm-new-cluster">SLURM (new) cluster</h1>
+<ul>
+<li>blundell durban frisch grace jorgenson laffont logit marshall radner sargan theil</li>
+<li>3 day time limit by default; 28 days if requested via <code>-t</code> flag</li>
+<li>please try to give a rough time limit but be conservative</li>
+<li>at most 28 cores per user at a time</li>
+</ul>
+<h1 id="slurm-basic-batch-job-submission">SLURM: basic batch job submission</h1>
+<p>Let's see how to submit a simple job.</p>
+<p>Here's an example job script (<em>basic.sh</em>) that I'll run.</p>
+<pre><code>        #!/bin/bash
+        # Job name:
+        #SBATCH --job-name=test
+        #
+        # Wall clock limit (3 minutes here):
+        #SBATCH --time=00:03:00
+        #
+        ## Command(s) to run:
+        python calc.py &gt;&amp; calc.out</code></pre>
+<p>By default this will request only one core for the job.</p>
+<p>Now let's submit and monitor the job:</p>
+<pre><code>sbatch job.sh
+
+squeue -j JOB_ID
+
+squeue -u ${USER}
+
+# to see a bunch of useful information on all jobs
+alias sq=&#39;squeue -o &quot;%.7i %.9P %.20j %.8u %.2t %l %.9M %.5C %.8r %.6D %R %p %q&quot;&#39;
+sq
+
+wwall -j JOB_ID</code></pre>
+<p>We could also include the SLURM flags in the submission script:</p>
+<pre><code>        #!/bin/bash
+        python calc.py &gt;&amp; calc.out</code></pre>
+<pre><code>sbatch --job-name=test --time=00:03:00 job.sh</code></pre>
+<h1 id="slurm-basic-interactive-job-submission">SLURM: basic interactive job submission</h1>
+<p>To start an interactive session,</p>
+<pre><code>srun --pty /bin/bash</code></pre>
+<p>To use graphical interfaces, you need to do add an extra flag:</p>
+<pre><code>srun --pty --x11 /bin/bash
+matlab</code></pre>
+<h1 id="slurm-submitting-parallel-jobs">SLURM: submitting parallel jobs</h1>
+<p>If you are submitting a job that uses multiple nodes, you'll need to carefully specify the resources you need. The key flags for use in your job script are:</p>
+<ul>
+<li><code>--nodes</code> (or <code>-N</code>): number of nodes to use</li>
+<li><code>--ntasks-per-node</code>: number of SLURM tasks (i.e., processes) one wants to run on each node</li>
+<li><code>--cpus-per-task</code> (or <code>-c</code>): number of cpus to be used for each task</li>
+</ul>
+<p>In addition, in some cases it can make sense to use the <code>--ntasks</code> (or <code>-n</code>) option to indicate the total number of SLURM tasks and let the scheduler determine how many nodes and tasks per node are needed. In general <code>--cpus-per-task</code> will be 1 except when running threaded code.</p>
+<p>Note that the --nodes flag is of somewhat limited use given we've limited users to at most 28 cores in use at once, but it is possible to request cores across multiple nodes.</p>
+<p>Here's an example job script (see also <em>parallel.sh</em>) for a job that does calculations in parallel in Stata:</p>
+<pre><code>   #!/bin/bash
+   # Job name:
+   #SBATCH --job-name=test
+   #
+   # Number of MPI tasks needed for use case (example):
+   #SBATCH --ntasks=1
+   #
+   # Processors per task:
+   #SBATCH --cpus-per-task=8
+   #
+   # Wall clock limit:
+   #SBATCH --time=00:00:30
+   #
+   ## Command(s) to run (example):
+   stata-mp -b do code.do </code></pre>
+<p>Some common paradigms are:</p>
+<ul>
+<li>openMP/threaded jobs that use <em>c</em> CPUs for <em>one</em> SLURM task
+<ul>
+<li><code>--nodes=1 --ntasks-per-node=1 --cpus-per-task=c</code></li>
+</ul></li>
+<li>multi-process jobs that use 1 CPU for multiple SLURM tasks; either of these are fine
+<ul>
+<li><code>--nodes=1 --ntasks-per-node=c --cpus-per-task=1</code></li>
+<li><code>--nodes=1 --ntasks-per-node=1 --cpus-per-task=c</code></li>
+</ul></li>
+</ul>
+<p>The following are also possible, though are more likely to be useful for jobs on Savio:</p>
+<ul>
+<li>MPI jobs that use <em>one</em> CPU per task for each of <em>n</em> SLURM tasks
+<ul>
+<li><code>--ntasks=n --cpus-per-task=1</code></li>
+<li><code>--nodes=x --ntasks-per-node=y --cpus-per-task=1</code>
+<ul>
+<li>assumes that <code>n = x*y</code></li>
+</ul></li>
+</ul></li>
+<li>hybrid parallelization jobs (e.g., MPI+threading) that use <em>c</em> CPUs for each of <em>n</em> SLURM tasks
+<ul>
+<li><code>--ntasks=n --cpus-per-task=c</code></li>
+<li><code>--nodes=x --ntasks-per-node=y cpus-per-task=c</code>
+<ul>
+<li>assumes that <code>y*c</code> equals the number of cores on a node and that <code>n = x*y</code> equals the total number of tasks</li>
+</ul></li>
+</ul></li>
+</ul>
+<p>In general, the defaults for the various flags will be 1 so some of the flags above are not strictly needed.</p>
+<p>For Savio, there are lots more examples of job submission scripts for different kinds of parallelization (multi-node (MPI), multi-core (openMP), hybrid, etc.) <a href="http://research-it.berkeley.edu/services/high-performance-computing/running-your-jobs#Job-submission-with-specific-resource-requirements">here</a>. We'll discuss some of them below.</p>
+<h1 id="slurm-environment-variables">SLURM environment variables</h1>
+<p>When you write your code, you may need to specify information in your code about the number of cores to use. SLURM will provide a variety of variables that you can use in your code so that it adapts to the resources you have requested rather than being hard-coded.</p>
+<p>Here are some of the variables that may be useful: SLURM_NTASKS, SLURM_CPUS_PER_TASK, SLURM_NODELIST, SLURM_NNODES.</p>
+<p>If you specified: - --cpus-per-task: use SLURM_CPUS_PER_TASK - --ntasks-per-node or --ntasks: use SLURM_NTASKS</p>
+<p>Here's how you can access those variables in your code:</p>
+<pre><code>import os                               ## Python
+int(os.environ[&#39;SLURM_CPUS_PER_TASK&#39;])         ## Python
+
+as.numeric(Sys.getenv(&#39;SLURM_CPUS_PER_TASK&#39;))  ## R
+
+str2num(getenv(&#39;SLURM_CPUS_PER_TASK&#39;)))        ## MATLAB
+
+local SLURM_CPUS_PER_TASK : env SLURM_CPUS_PER_TASK            ## Stata</code></pre>
+<p>We'll see in the next examples how one would then use such environment variables to programmatically control the parallelization in your code so that you don't need to hard-code the number of processes/threads/cores/etc.</p>
+<p>In our examples, we will use --cpus-per-task. We could also use --ntasks with --nodes=1, but if we leave out the --nodes=1, then SLURM might put our tasks on multiple nodes and the parallel tools in these examples don't work across multiple nodes.</p>
+<h1 id="slurm-templates-parallel-stata">SLURM templates: parallel Stata</h1>
+<p>The file <code>example-stata.sh</code> is an example job submission script for a parallel Stata job.</p>
+<pre><code>#!/bin/bash
+# Job name:
+#SBATCH --job-name=stata-test
+#
+# optional but please include if possible
+# Wall clock limit (3 minutes here):
+#SBATCH --time=00:03:00
+#
+#SBATCH --cpus-per-task=8
+## Command(s) to run:
+stata-mp -b do code.do </code></pre>
+<p>By default Stata-MP will use 8 cores, so if you request 2-7 cores, please include the following at the top of your .do file:</p>
+<pre><code>local SLURM_CPUS_PER_TASK : env SLURM_CPUS_PER_TASK          
+set processors `SLURM_CPUS_PER_TASK&#39;</code></pre>
+<h1 id="slurm-templates-parallel-python">SLURM templates: parallel Python</h1>
+<p>Here's an example of parallelizing Python code using iPython's parallel capability. The file <code>example-python.sh</code> is an example job submission script for a parallel iPython job run in parallel.py (it just does a toy example stratified regression analysis of some airline departure data).</p>
+<pre><code>#!/bin/bash
+# Job name:
+#SBATCH --job-name=python-test
+#
+# optional but please include if possible
+# Wall clock limit (30 minutes here):
+#SBATCH --time=00:30:00
+#
+#SBATCH --cpus-per-task=8
+#
+## Command(s) to run:
+# to be safe that we get the Python version we want
+module unload python
+module load python/3
+ipcluster start -n $SLURM_CPUS_PER_TASK &amp;
+ipython &lt; parallel.py
+ipcluster stop</code></pre>
+<p>Now here's the Python code (see <em>parallel.py</em>) we're running:</p>
+<pre><code>from IPython.parallel import Client
+c = Client()
+c.ids
+
+dview = c[:]
+dview.block = True
+dview.apply(lambda : &quot;Hello, World&quot;)
+
+lview = c.load_balanced_view()
+lview.block = True
+
+import pandas
+dat = pandas.read_csv(&#39;bayArea.csv&#39;, header = None)
+dat.columns = (&#39;Year&#39;,&#39;Month&#39;,&#39;DayofMonth&#39;,&#39;DayOfWeek&#39;,&#39;DepTime&#39;,&#39;CRSDepTime&#39;,&#39;ArrTime&#39;,&#39;CRSArrTime&#39;,&#39;UniqueCarrier&#39;,&#39;FlightNum&#39;,&#39;TailNum&#39;,&#39;ActualElapsedTime&#39;,&#39;CRSElapsedTime&#39;,&#39;AirTime&#39;,&#39;ArrDelay&#39;,&#39;DepDelay&#39;,&#39;Origin&#39;,&#39;Dest&#39;,&#39;Distance&#39;,&#39;TaxiIn&#39;,&#39;TaxiOut&#39;,&#39;Cancelled&#39;,&#39;CancellationCode&#39;,&#39;Diverted&#39;,&#39;CarrierDelay&#39;,&#39;WeatherDelay&#39;,&#39;NASDelay&#39;,&#39;SecurityDelay&#39;,&#39;LateAircraftDelay&#39;)
+
+dview.execute(&#39;import statsmodels.api as sm&#39;)
+
+dat2 = dat.loc[:, (&#39;DepDelay&#39;,&#39;Year&#39;,&#39;Dest&#39;,&#39;Origin&#39;)]
+dests = dat2.Dest.unique()
+
+mydict = dict(dat2 = dat2, dests = dests)
+dview.push(mydict)
+
+def f(id):
+    sub = dat2.loc[dat2.Dest == dests[id],:]
+    sub = sm.add_constant(sub)
+    model = sm.OLS(sub.DepDelay, sub.loc[:,(&#39;const&#39;,&#39;Year&#39;)])
+    results = model.fit()
+    return results.params
+
+import time
+time.time()
+parallel_result = lview.map(f, range(len(dests)))
+#result = map(f, range(len(dests)))
+time.time()
+
+# some NaN values because all &#39;Year&#39; values are the same for some destinations
+
+parallel_result</code></pre>
+<h1 id="slurm-templates-matlab">SLURM templates: MATLAB</h1>
+<h3 id="matlab-with-one-core.">MATLAB with one core.</h3>
+<p>See <em>example-matlab-onecore.sh</em>.</p>
+<h3 id="matlab-with-threading">MATLAB with threading</h3>
+<p>The file <code>example-matlab-threaded.sh</code> is an example job submission script for a parallel MATLAB job using parfor.</p>
+<p>The key thing is to set the number of threads in your MATLAB code file so that your job uses no more cores than you've requested. Here's how:</p>
+<pre><code>feature(’numThreads’, str2num(getenv(&#39;SLURM_CPUS_PER_TASK&#39;)));</code></pre>
+<h3 id="matlab-with-parfor">MATLAB with parfor</h3>
+<p>Here's an example of parallelizing MATLAB code.</p>
+<p>The file <code>example-matlab-parfor.sh</code> is an example job submission script for a parallel MATLAB job using parfor.</p>
+<h1 id="slurm-templates-parallel-r">SLURM templates: parallel R</h1>
+<p>The file <code>example-R.sh</code> is an example job submission script for a parallel R job run in parallel.R (it just does a toy example stratified regression analysis of some airline departure data).</p>
+<pre><code>#!/bin/bash
+# Job name:
+#SBATCH --job-name=R-test
+#
+# optional but please include if possible
+# Wall clock limit (30 minutes here):
+#SBATCH --time=00:30:00
+#
+#SBATCH --cpus-per-task=8
+#
+## Command(s) to run:
+R CMD BATCH --no-save parallel.R parallel.Rout</code></pre>
+<p>Now here's the R code (see <em>parallel.R</em>) we're running:</p>
+<pre><code>library(doParallel)
+
+nCores &lt;- Sys.getenv(&#39;SLURM_CPUS_PER_TASK&#39;)
+registerDoParallel(nCores)
+
+dat &lt;- read.csv(&#39;~/bayArea.csv&#39;, header = FALSE,
+                stringsAsFactors = FALSE)
+names(dat)[16:18] &lt;- c(&#39;delay&#39;, &#39;origin&#39;, &#39;dest&#39;)
+table(dat$dest)
+
+destVals &lt;- unique(dat$dest)
+
+results &lt;- foreach(destVal = destVals) %dopar% {
+    sub &lt;- subset(dat, dest == destVal)
+    summary(sub$delay)
+}
+
+results</code></pre>
+<h1 id="savio-access-models">Savio: access models</h1>
+<ul>
+<li>Direct access</li>
+<li>EML has purchased two nodes (48 cores) and you can <a href="http://goo.gl/forms/Sqt8kBG4P5">request a Savio account</a> as an individual EML user</li>
+<li>Access through a faculty member</li>
+<li>All regular Berkeley faculty can request 200,000 service units (roughly core-hours) per year through the <a href="http://research-it.berkeley.edu/services/high-performance-computing/faculty-computing-allowance">Faculty Computing Allowance (FCA)</a></li>
+<li>Researchers can also purchase nodes for their own priority access and gain access to the shared Savio infrastructure and to the ability to <em>burst</em> to additional nodes through the <a href="http://research-it.berkeley.edu/services/high-performance-computing/condo-cluster-program">condo cluster program</a></li>
+</ul>
+<p>Faculty/principal investigators can allow researchers working with them to get user accounts with access to the FCA or condo resources available to the faculty member.</p>
+<p>As a member of the EML condo, you have access to savio2 nodes at regular priority and GPU, large memory, and other kinds of nodes at low priority (jobs can be killed without notice).</p>
+<p>Using a faculty compute allowance, you have access to all kinds of nodes at regular priority.</p>
+<h1 id="savio-logging-in-and-submitting-jobs">Savio: logging in and submitting jobs</h1>
+<p>Savio requires two-factor authentication and installation of the Google authenticator application on your smartphone or tablet as described in detail <a href="http://research-it.berkeley.edu/services/high-performance-computing/logging-savio">here</a>.</p>
+<p>When entering your password, remember to enter: <code>AAAAAABBBBBB</code>, where AAAAAA is your Google Authenticator PIN and BBBBBB is the one-time password.</p>
+<p>You can submit jobs using SLURM similarly to the EML SLURM cluster.</p>
+<p>You should put any data files that will be input or output for your jobs in <code>/global/scratch/${USER}</code>.</p>
+<p>To copy files to and from Savio, you need to do this from a data transfer node</p>
+<pre><code>ssh dtn
+scp smith@theil.berkeley.edu:~/foo .</code></pre>
+<p>or use Globus (EML and Savio both have Globus endpoints).</p>
+<h1 id="data-transfer-globus">Data transfer: Globus</h1>
+<p>You can use Globus Connect to transfer data data to/from Savio (and between other resources) quickly and unattended. This is a better choice for large transfers. Here are some <a href="http://research-it.berkeley.edu/services/high-performance-computing/using-globus-connect-savio">instructions</a>.</p>
+<p>Globus transfers data between <em>endpoints</em>. Possible endpoints include: Savio, your laptop or desktop, EML, and XSEDE, among others.</p>
+<p>Savio's endpoint is named <code>ucb#brc</code> and EML's is <code>ucb#econ</code>.</p>
+<p>If you are transferring to/from your laptop, you'll need 1) Globus Connect Personal set up, 2) your machine established as an endpoint and 3) Globus Connect Pesonal actively running on your machine. At that point you can proceed as below.</p>
+<p>To transfer files, you open Globus at <a href="https://globus.org">globus.org</a> and authenticate to the endpoints you want to transfer between. You can then start a transfer and it will proceed in the background, including restarting if interrupted.</p>
+<p>Globus also provides a <a href="https://docs.globus.org/cli/using-the-cli">command line interface</a> that will allow you to do transfers programmatically, such that a transfer could be embedded in a workflow script.</p>
+<h1 id="savio-accessing-software">Savio: accessing software</h1>
+<p>A lot of software is available on Savio but needs to be loaded from the relevant software module before you can use it.</p>
+<pre><code>module list  # what&#39;s loaded?
+module avail  # what&#39;s available</code></pre>
+<p>One thing that tricks people is that the modules are arranged in a hierarchical (nested) fashion, so you only see some of the modules as being available <em>after</em> you load the parent module. Here's how we see the Python packages that are available.</p>
+<pre><code>which python
+python
+
+module avail
+module load python/2.7.8
+which python
+module avail
+module load numpy
+python 
+# import numpy as np</code></pre>
+<h1 id="savio-disk-space">Savio: Disk space</h1>
+<p>You have access to the following disk space, described <a href="http://research-it.berkeley.edu/services/high-performance-computing/user-guide#Storage">here in the <em>Storage and Backup</em> section</a>.</p>
+<ul>
+<li>somewhat limited home directory storage (10 GB)</li>
+<li>1 PB scratch space ('unlimited' use but not backed up or permanent)</li>
+<li>new condo storage offering: $14000 for 40 TB</li>
+</ul>
+<p>Also, we have a copy of the Nielsen data on Savio so you don't need to make your own copy/download.</p>
+<h1 id="online-resources">Online resources</h1>
+<ul>
+<li>EML SLURM cluster page:</li>
+<li><a href="http://eml.berkeley.edu/52">http://eml.berkeley.edu/52</a></li>
+<li>EML SGE (old) cluster page:</li>
+<li><a href="http://eml.berkeley.edu/563">http://eml.berkeley.edu/563</a></li>
+<li>SCF tutorials on computing topics including single-node and multiple-node parallelization:</li>
+<li><a href="http://statistics.berkeley.edu/computing/training/tutorials">http://statistics.berkeley.edu/computing/tutorials</a></li>
+<li>Savio documentation: <a href="http://research-it.berkeley.edu/services/high-performance-computing">http://research-it.berkeley.edu/services/high-performance-computing</a></li>
+</ul>
+<h1 id="how-to-get-additional-help">How to get additional help</h1>
+<ul>
+<li>For EML resources
+<ul>
+<li>consult@econ.berkeley.edu or trouble@econ.berkeley.edu</li>
+</ul></li>
+<li>For initial Savio, XSEDE, and cloud computing questions:
+<ul>
+<li>consult@econ.berkeley.edu</li>
+</ul></li>
+<li>For technical issues and questions about using Savio:
+<ul>
+<li>brc-hpc-help@berkeley.edu</li>
+</ul></li>
+<li>For questions about computing resources in general, including cloud computing:
+<ul>
+<li>brc@berkeley.edu</li>
+</ul></li>
+<li>For questions about data management (including HIPAA-protected data):
+<ul>
+<li>researchdata@berkeley.edu</li>
+</ul></li>
+</ul>
+</body>
+</html>
