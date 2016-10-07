@@ -4,14 +4,17 @@
 
 # Introduction
 
-We'll do this mostly as a demonstration. I encourage you to login to one of the EML Linux machines and try out the various examples yourself as we go through them.
+We'll do this in part as a demonstration. I encourage you to login to one of the EML Linux machines and try out the various examples yourself as we go through them.
 
 This material is based on:
 
  - [The EML high-priority cluster webpage](http://eml.berkeley.edu/52)
- - [The Savio user guide](http://research-it.berkeley.edu/services/high-performance-computing/user-guide).
+ - [The Savio user guide](http://research-it.berkeley.edu/services/high-performance-computing/user-guide)
 
-The materials for this tutorial are available using git at [https://github.com/berkeley-scf/slurm-eml-2016](https://github.com/berkeley-scf/slurm-eml-2016) or simply as a [zip file](https://github.com/berkeley-scf/slurm-eml-2016/archive/master.zip).
+The materials for this tutorial are available:
+
+ - using git at [https://github.com/berkeley-scf/slurm-eml-2016](https://github.com/berkeley-scf/slurm-eml-2016) or 
+ - simply as a [zip file](https://github.com/berkeley-scf/slurm-eml-2016/archive/master.zip).
 
 # Outline
 
@@ -26,7 +29,6 @@ This training session will cover the following topics:
  - SLURM on the EML high-priority cluster
     - basic interactive and batch submission
     - submitting parallel jobs
-    - monitoring jobs
     - Stata, Python, MATLAB, R templates for parallel code
  - Savio
     - Access models: Econ condo and faculty computing allowances
@@ -51,16 +53,24 @@ This training session will cover the following topics:
     - Python, R, MATLAB, Spark, (SAS?)
  - [NSF XSEDE network](https://www.xsede.org) of supercomputers
     - Bridges supercomputer for big data computing, including Spark
+    - many other clusters/supercomputers
 
 **Big picture: if you don't have enough computing resources, don't give up and work on a smaller problem, talk to us.**
 
 # Job competition and scheduling on the EML clusters
 
+ - goals:
+     - allow users to share the CPUs equitably
+     - efficiently use the CPUs to maximum potential
+     - allow large jobs to run
+     - allow users to submit many jobs and have the scheduler manage them
  - jobs with various requirements
+     - time length
+     - number of cores
  - current scheduling policies
      - fairshare for queue
      - once running, only subject to time limits
- - backfilling and (on old cluster) resource reservations
+     - backfilling and (on old cluster) resource reservations
  - time limits 
      - very helpful for the scheduler - please include with SLURM submissions
 
@@ -76,7 +86,7 @@ This training session will cover the following topics:
 
 Let's see how to submit a simple job. 
 
-Here's an example job script (*basic.sh*) that I'll run. 
+Here's an example job script (*job.sh*) that I'll run. 
 
 ```
 #!/bin/bash
@@ -116,7 +126,7 @@ python calc.py >& calc.out
 and here is the job submission:
 
 ```
-sbatch --job-name=test --time=00:03:00 job.sh
+sbatch --job-name=test --time=00:03:00 job_short.sh
 ```
 
 
@@ -150,7 +160,7 @@ In addition, in some cases it can make sense to use the `--ntasks` (or `-n`) opt
 
 Note that the --nodes flag is of somewhat limited use given we've limited users to at most 28 cores in use at once, but it is possible to request cores across multiple nodes.
 
-Here's an example job script (see also *parallel-basic.sh*) for a job that does calculations in parallel in Stata:
+Here's an example job script (see also *job-parallel.sh*) for a job that does calculations in parallel in Stata:
 
 ```
 #!/bin/bash
@@ -176,13 +186,16 @@ On the EML, each user can only use 28 cores at a time and we only have four node
 
 Some common paradigms are:
 
- - openMP/threaded jobs that use *c* CPUs for *one* SLURM task
-     - `--nodes=1 --ntasks-per-node=1 --cpus-per-task=c` 
- - multi-process jobs that use 1 CPU for multiple SLURM tasks; either of these are fine
-     - `--nodes=1 --ntasks-per-node=c --cpus-per-task=1` 
-     - `--nodes=1 --ntasks-per-node=1 --cpus-per-task=c` 
+ - `--nodes=1 --ntasks-per-node=1 --cpus-per-task=c` 
+ - `--nodes=1 --ntasks-per-node=c --cpus-per-task=1` 
 
 For many problems specifying the number of cores via `--cpus-per-task` or via `--ntasks-per-node` will equivalent. 
+
+In general, the defaults for the various flags will be 1 so some of the flags above are not strictly needed.
+
+If you use MATLAB DCS, iPython parallel, or parallelized R in certain ways, it's possible to run a job across cores on multiple nodes, which would require changing the flags to use:
+
+ - `--ntasks=n --cpus-per-task=1`
 
 # SLURM: submitting parallel jobs on Savio
 
@@ -190,6 +203,9 @@ On Savio one makes use of more functionality in terms of requesting resource for
 
 Here are some common paradigms on Savio:
 
+ - multi-core or multi-process jobs on one node
+     - `--nodes=1 --ntasks-per-node=1 --cpus-per-task=c` 
+     - `--nodes=1 --ntasks-per-node=n --cpus-per-task=1` 
  - MPI jobs that use *one* CPU per task for each of *n* SLURM tasks
      - `--ntasks=n --cpus-per-task=1` 
      - `--nodes=x --ntasks-per-node=y --cpus-per-task=1` 
@@ -337,7 +353,7 @@ See *example-matlab-onecore.sh*.
 
 The file *example-matlab-parallel.sh* is an example job submission script for a parallel MATLAB job using threading or parfor.
 
-The key thing when using threading in MATLAB (which is used by default) is to set the number of threads in your MATLAB code file so that your job uses no more cores than you've requested. Here's how (as also seen in *parallel-threaded.m*:
+The key thing when using threading in MATLAB (which is used by default) is to set the number of threads in your MATLAB code file so that your job uses no more cores than you've requested. Here's how (as also seen in *parallel-threaded.m*):
 
 ```
 feature(’numThreads’, str2num(getenv('SLURM_CPUS_PER_TASK')));
@@ -347,7 +363,7 @@ feature(’numThreads’, str2num(getenv('SLURM_CPUS_PER_TASK')));
 
 Here's an example of parallelizing MATLAB code. 
 
-The file *example-matlab-parallel.sh* is an example job submission script for a parallel MATLAB job using parfor.
+The file *example-matlab-parallel.sh* is (also) an example job submission script for a parallel MATLAB job using parfor.
 
 The file *parallel-parfor.m* shows how to use parfor such that your code automatically detects how many cores it should use.
 
@@ -401,7 +417,10 @@ results
 
 Faculty/principal investigators can allow researchers working with them to get user accounts with access to the FCA or condo resources available to the faculty member.
 
-As a member of the EML condo, you have access to savio2 nodes at regular priority and GPU, large memory, and other kinds of nodes at low priority (jobs can be killed without notice). 
+As a member of the EML condo, you have access to 
+
+  - savio2 nodes at regular priority and 
+  - GPU, large memory, and other kinds of nodes at low priority (jobs can be killed without notice). 
 
 Using a faculty compute allowance, you have access to all kinds of nodes at regular priority.
 
@@ -431,7 +450,7 @@ Globus transfers data between *endpoints*. Possible endpoints include: Savio, yo
 
 Savio's endpoint is named `ucb#brc` and EML's is `ucb#econ`.
 
-If you are transferring to/from your laptop, you'll need 1) Globus Connect Personal set up, 2) your machine established as an endpoint and 3) Globus Connect Pesonal actively running on your machine. At that point you can proceed as below.
+If you are transferring to/from your laptop, you'll need 1) Globus Connect Personal set up, 2) your machine established as an endpoint and 3) Globus Connect Personal actively running on your machine. At that point you can proceed as below.
 
 To transfer files, you open Globus at [globus.org](https://globus.org) and authenticate to the endpoints you want to transfer between. You can then start a transfer and it will proceed in the background, including restarting if interrupted. 
 
@@ -473,6 +492,17 @@ You have access to the following disk space, described [here in the *Storage and
 
 Also, we have a copy of the Nielsen data on Savio so you don't need to make your own copy/download. 
 
+# XSEDE resources
+
+ - NSF network of supercomputing centers/resources
+ - new resources in XSEDE2 currently under-utilized
+ - PSC Bridges set up for big data, including Spark and very large memory nodes
+ - access:
+    - can get initial access via brc@berkeley.edu       
+    - follow up with a start-up allocation (one-page, always approved)
+    - finally, research grants possible (several page process)
+
+
 # Online resources
 
  - EML SLURM cluster page: 
@@ -483,16 +513,6 @@ Also, we have a copy of the Nielsen data on Savio so you don't need to make your
      - [http://statistics.berkeley.edu/computing/tutorials](http://statistics.berkeley.edu/computing/training/tutorials)
   - Savio documentation: 
      - [http://research-it.berkeley.edu/services/high-performance-computing](http://research-it.berkeley.edu/services/high-performance-computing)
-
-# XSEDE resources
-
- - NSF network of supercomputing centers/resources
- - new resources in XSEDE2 currently under-utilized
- - PSC Bridges set up for big data, including Spark
- - can get initial access via brc@berkeley.edu
- - followup with a start-up allocation (one-page, always approved)
- - research grants possible (several page process)
-
 
 # How to get additional help
 
