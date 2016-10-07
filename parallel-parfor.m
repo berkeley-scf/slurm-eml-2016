@@ -1,4 +1,4 @@
-nslots = str2num(getenv('SLURM_NTASKS')));
+nslots = str2num(getenv('SLURM_CPUS_PER_TASK')));
 mypool = parpool(nslots) 
 % parpool open local nslots # alternative
 

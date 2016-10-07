@@ -7,4 +7,4 @@
 #SBATCH --time=00:30:00
 #
 ## Command(s) to run:
-matlab -singleCompThread  -nodesktop -nodisplay < parallel.m > parallel.mout
+matlab -singleCompThread  -nodesktop -nodisplay < code.m > code.mout

@@ -9,9 +9,4 @@
 #SBATCH --cpus-per-task=8
 #
 ## Command(s) to run:
-
-# threaded MATLAB
-matlab --nodesktop --nodisplay < parallel-threaded.m > parallel.mout
-
-# MATLAB with parfor
-matlab --nodesktop --nodisplay < parallel-parfor.m > parallel.mout
+matlab --nodesktop --nodisplay < parallel.m > parallel.mout

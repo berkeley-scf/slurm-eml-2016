@@ -1,6 +1,6 @@
 library(doParallel)
 
-nCores <- Sys.getenv('SLURM_CPUS_PER_TASK')
+nCores <- as.numeric(Sys.getenv('SLURM_CPUS_PER_TASK'))
 registerDoParallel(nCores)
 
 dat <- read.csv('~/bayArea.csv', header = FALSE,
