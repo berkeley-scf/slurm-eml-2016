@@ -15,6 +15,7 @@ The materials for this tutorial are available:
 
  - using git at [https://github.com/berkeley-scf/slurm-eml-2016](https://github.com/berkeley-scf/slurm-eml-2016) or 
  - simply as a [zip file](https://github.com/berkeley-scf/slurm-eml-2016/archive/master.zip).
+ - example dataset for Python and R examples (*bayArea.csv*) available from [www.stat.berkeley.edu/share/paciorek/bayArea.csv](www.stat.berkeley.edu/share/paciorek/bayArea.csv).
 
 # Outline
 
